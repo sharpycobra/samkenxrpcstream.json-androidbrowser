@@ -5,9 +5,9 @@
 #include "third_party/blink/renderer/core/layout/mathml/math_token_layout_algorithm.h"
 
 #include "third_party/blink/renderer/core/html/canvas/text_metrics.h"
+#include "third_party/blink/renderer/core/layout/logical_box_fragment.h"
 #include "third_party/blink/renderer/core/layout/mathml/math_layout_utils.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_box_fragment.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_out_of_flow_layout_part.h"
+#include "third_party/blink/renderer/core/layout/out_of_flow_layout_part.h"
 #include "third_party/blink/renderer/core/mathml/mathml_token_element.h"
 
 namespace blink {
@@ -20,7 +20,7 @@ MathTokenLayoutAlgorithm::MathTokenLayoutAlgorithm(
       Node().IsInlineFormattingContextRoot());
 }
 
-const NGLayoutResult* MathTokenLayoutAlgorithm::Layout() {
+const LayoutResult* MathTokenLayoutAlgorithm::Layout() {
   DCHECK(!IsBreakInside(GetBreakToken()));
 
   LayoutInputNode child = Node().FirstChild();
@@ -40,12 +40,12 @@ const NGLayoutResult* MathTokenLayoutAlgorithm::Layout() {
 
   SimpleInlineChildLayoutContext context(To<InlineNode>(child),
                                          &container_builder_);
-  const NGLayoutResult* child_layout_result = To<InlineNode>(child).Layout(
+  const LayoutResult* child_layout_result = To<InlineNode>(child).Layout(
       GetConstraintSpace(), /* break_token */ nullptr,
       /* column_spanner_path */ nullptr, &context);
 
   const auto& line_box =
-      To<PhysicalLineBoxFragment>(child_layout_result->PhysicalFragment());
+      To<PhysicalLineBoxFragment>(child_layout_result->GetPhysicalFragment());
   const FontHeight line_metrics = line_box.Metrics();
   container_builder_.AddResult(
       *child_layout_result,

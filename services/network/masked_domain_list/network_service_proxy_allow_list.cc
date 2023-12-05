@@ -45,9 +45,7 @@ NetworkServiceProxyAllowList NetworkServiceProxyAllowList::CreateForTesting(
 }
 
 bool NetworkServiceProxyAllowList::IsEnabled() {
-  return base::FeatureList::IsEnabled(
-             net::features::kEnableIpProtectionProxy) &&
-         base::FeatureList::IsEnabled(network::features::kMaskedDomainList);
+  return base::FeatureList::IsEnabled(network::features::kMaskedDomainList);
 }
 
 bool NetworkServiceProxyAllowList::IsPopulated() {
@@ -69,8 +67,8 @@ NetworkServiceProxyAllowList::MakeIpProtectionCustomProxyConfig() {
 void NetworkServiceProxyAllowList::AddDomainWithBypass(
     const std::string& domain,
     net::SchemeHostPortMatcher bypass_matcher) {
-  url_matcher_with_bypass_.AddDomainWithBypass(domain,
-                                               std::move(bypass_matcher));
+  url_matcher_with_bypass_.AddDomainWithBypass(
+      domain, std::move(bypass_matcher), /*include_subdomains=*/true);
 }
 
 size_t NetworkServiceProxyAllowList::EstimateMemoryUsage() const {

@@ -117,8 +117,8 @@ class InputDeviceSettingsMetricsManagerTest : public AshTestBase {
     std::map<std::string, std::string> sysfs_attributes;
     sysfs_properties[kKbdTopRowPropertyName] = kKbdTopRowLayout1Tag;
     fake_udev_.AddFakeDevice(fake_keyboard.name, fake_keyboard.sys_path.value(),
-                             /*subsystem=*/"input", /*devnode=*/absl::nullopt,
-                             /*devtype=*/absl::nullopt,
+                             /*subsystem=*/"input", /*devnode=*/std::nullopt,
+                             /*devtype=*/std::nullopt,
                              std::move(sysfs_attributes),
                              std::move(sysfs_properties));
 
@@ -1169,6 +1169,24 @@ TEST_F(InputDeviceSettingsMetricsManagerTest,
       "ChromeOS.Settings.Device.GraphicsTabletPen.ButtonRemapping.Registered."
       "Vkey",
       ui::VKEY_B, 1);
+}
+
+TEST_F(InputDeviceSettingsMetricsManagerTest,
+       RecordRemappingActionWhenButtonPressed) {
+  const auto remappingAction = mojom::RemappingAction::NewStaticShortcutAction(
+      mojom::StaticShortcutAction::kPaste);
+  base::HistogramTester histogram_tester;
+  histogram_tester.ExpectTotalCount(
+      "ChromeOS.Settings.Device.Mouse.ButtonRemapping.StaticShortcutAction."
+      "Pressed",
+      /*expected_count=*/0);
+
+  manager_->RecordRemappingActionWhenButtonPressed(*remappingAction,
+                                                   /*peripheral_kind=*/"Mouse");
+  histogram_tester.ExpectTotalCount(
+      "ChromeOS.Settings.Device.Mouse.ButtonRemapping.StaticShortcutAction."
+      "Pressed",
+      /*expected_count=*/1u);
 }
 
 class SettingsUpdatedTimePeriodMetricsTest

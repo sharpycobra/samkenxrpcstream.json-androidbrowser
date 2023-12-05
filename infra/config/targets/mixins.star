@@ -630,7 +630,7 @@ targets.mixin(
 targets.mixin(
     name = "ios_parallel_simulators",
     args = [
-        "--shards",
+        "--clones",
         "2",
     ],
 )
@@ -962,6 +962,7 @@ targets.mixin(
     swarming = targets.swarming(
         dimensions = {
             "cpu": "arm64",
+            "gpu": "apple:m1",
             "mac_model": "Macmini9,1",
             "os": "Mac-13.4",
             "pool": "chromium.tests",
@@ -975,6 +976,7 @@ targets.mixin(
     swarming = targets.swarming(
         dimensions = {
             "cpu": "arm64",
+            "gpu": "apple:m1",
             "mac_model": "Macmini9,1",
             "os": "Mac-13.5.2",
             "pool": "chromium.tests",
@@ -988,6 +990,7 @@ targets.mixin(
     swarming = targets.swarming(
         dimensions = {
             "cpu": "arm64",
+            "gpu": "apple:m2",
             "mac_model": "Mac14,7",
             "os": "Mac-13.3.1",
             "pool": "chromium.tests.gpu",
@@ -1142,7 +1145,7 @@ targets.mixin(
             targets.cipd_package(
                 package = "infra/tools/mac_toolchain/${platform}",
                 location = ".",
-                revision = "git_revision:32d81d877ee07af07bf03b7f70ce597e323b80ce",
+                revision = "git_revision:b28cf90d462a7bbd45c28f2d931960c2b9404cb0",
             ),
         ],
     ),
@@ -1674,9 +1677,9 @@ targets.mixin(
 )
 
 targets.mixin(
-    name = "xcode_parallelization",
+    name = "xcodebuild_sim_runner",
     args = [
-        "--xcode-parallelization",
+        "--xcodebuild-sim-runner",
     ],
 )
 

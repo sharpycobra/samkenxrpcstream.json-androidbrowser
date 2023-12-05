@@ -11,15 +11,14 @@ import {isNewDirectoryTreeEnabled} from '../../common/js/flags.js';
 import {recordEnum} from '../../common/js/metrics.js';
 import {getEntryLabel, str} from '../../common/js/translations.js';
 import type {TrashEntry} from '../../common/js/trash.js';
-import {VolumeManagerCommon} from '../../common/js/volume_manager_types.js';
-import type {DirectoryChangeEvent} from '../../externs/directory_change_event.js';
+import {RootType} from '../../common/js/volume_manager_types.js';
 import {DialogType} from '../../externs/ts/state.js';
 import type {VolumeManager} from '../../externs/volume_manager.js';
 import {changeDirectory} from '../../state/ducks/current_directory.js';
 import {getStore} from '../../state/store.js';
 
 import type {AppStateController} from './app_state_controller.js';
-import type {DirectoryModel} from './directory_model.js';
+import type {DirectoryChangeEvent, DirectoryModel} from './directory_model.js';
 import type {FileSelectionHandler} from './file_selection.js';
 import type {NamingController} from './naming_controller.js';
 import type {TaskController} from './task_controller.js';
@@ -209,8 +208,7 @@ export class MainWindowComponent {
     if (this.dialogType_ === DialogType.FULL_PAGE) {
       // Files within the trash root should not have default tasks. They should
       // be restored first.
-      if (this.directoryModel_.getCurrentRootType() ===
-          VolumeManagerCommon.RootType.TRASH) {
+      if (this.directoryModel_.getCurrentRootType() === RootType.TRASH) {
         const selection = this.selectionHandler_.selection;
         if (!selection) {
           return true;
@@ -439,20 +437,20 @@ export class MainWindowComponent {
    * @param event The directory-changed event.
    */
   private onDirectoryChanged_(event: DirectoryChangeEvent) {
-    const newVolumeInfo = event.newDirEntry ?
-        this.volumeManager_.getVolumeInfo(event.newDirEntry) :
+    const newVolumeInfo = event.detail.newDirEntry ?
+        this.volumeManager_.getVolumeInfo(event.detail.newDirEntry) :
         null;
 
     // Update unformatted volume status.
     const unformatted = !!(newVolumeInfo && newVolumeInfo.error);
     this.ui_.element.toggleAttribute('unformatted', /*force=*/ unformatted);
 
-    if (event.newDirEntry) {
+    if (event.detail.newDirEntry) {
       // Updates UI.
       if (this.dialogType_ === DialogType.FULL_PAGE) {
         const locationInfo =
-            this.volumeManager_.getLocationInfo(event.newDirEntry);
-        const label = getEntryLabel(locationInfo, event.newDirEntry);
+            this.volumeManager_.getLocationInfo(event.detail.newDirEntry);
+        const label = getEntryLabel(locationInfo, event.detail.newDirEntry);
         document.title = `${str('FILEMANAGER_APP_NAME')} - ${label}`;
       }
     }

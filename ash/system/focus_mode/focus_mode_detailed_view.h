@@ -11,15 +11,17 @@
 #include "ash/system/tray/tray_detailed_view.h"
 #include "base/timer/timer.h"
 #include "ui/base/metadata/metadata_header_macros.h"
+#include "ui/views/view_observer.h"
 
 namespace views {
 class BoxLayoutView;
 class Label;
-}
+}  // namespace views
 
 namespace ash {
 
 class FocusModeCountdownView;
+class FocusModeTaskView;
 class HoverHighlightView;
 class IconButton;
 class RoundedContainer;
@@ -27,9 +29,9 @@ class Switch;
 class SystemTextfield;
 
 // This view displays the focus panel settings that a user can set.
-class ASH_EXPORT FocusModeDetailedView
-    : public TrayDetailedView,
-      public FocusModeController::Observer {
+class ASH_EXPORT FocusModeDetailedView : public TrayDetailedView,
+                                         public FocusModeController::Observer,
+                                         public views::ViewObserver {
  public:
   METADATA_HEADER(FocusModeDetailedView);
 
@@ -37,6 +39,9 @@ class ASH_EXPORT FocusModeDetailedView
   FocusModeDetailedView(const FocusModeDetailedView&) = delete;
   FocusModeDetailedView& operator=(const FocusModeDetailedView&) = delete;
   ~FocusModeDetailedView() override;
+
+  // views::ViewObserver:
+  void OnViewBoundsChanged(View* observed_view) override;
 
  private:
   class TimerTextfieldController;
@@ -70,6 +75,10 @@ class ASH_EXPORT FocusModeDetailedView
   // selected saved task item view and the header.
   void CreateTaskView();
 
+  // Performs an animation to shift the visible container views below
+  // `task_view_container_`.
+  void OnTaskViewAnimate(const int shift_height);
+
   // Creates the DND rounded container. This view will be visible only when
   // there is no active focus session. The toggle button in this view will
   // represent if we should toggle on the system DND state for a new focus
@@ -98,9 +107,6 @@ class ASH_EXPORT FocusModeDetailedView
   // Increments or decrements the session duration by one step.
   // This is only used outside of a focus session.
   void AdjustInactiveSessionDuration(bool decrement);
-
-  // Called whenever the Start/End button in the toggle row is pressed.
-  void ToggleButtonPressed();
 
   // Called whenever the session duration is adjusted. Updates the labels and
   // button visibilities in the timer setting view.
@@ -135,6 +141,12 @@ class ASH_EXPORT FocusModeDetailedView
   // A label that displays the end time of the focus session when focus is
   // active.
   raw_ptr<views::Label> end_time_label_ = nullptr;
+
+  // Records the height of the `task_view_container_`.
+  int task_view_container_height_ = 0;
+  // The view contains a header view and a `focus_mode_task_view_`.
+  raw_ptr<RoundedContainer> task_view_container_ = nullptr;
+  raw_ptr<FocusModeTaskView> focus_mode_task_view_ = nullptr;
 
   // This view contains a toggle for turning on/off DND.
   raw_ptr<RoundedContainer> do_not_disturb_view_ = nullptr;

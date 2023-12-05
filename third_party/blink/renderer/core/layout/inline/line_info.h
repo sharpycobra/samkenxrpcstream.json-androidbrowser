@@ -8,11 +8,11 @@
 #include "base/check_op.h"
 #include "base/dcheck_is_on.h"
 #include "third_party/blink/renderer/core/core_export.h"
+#include "third_party/blink/renderer/core/layout/block_break_token.h"
 #include "third_party/blink/renderer/core/layout/geometry/bfc_offset.h"
 #include "third_party/blink/renderer/core/layout/inline/inline_item_result.h"
 #include "third_party/blink/renderer/core/layout/inline/inline_item_text_index.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_block_break_token.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_layout_result.h"
+#include "third_party/blink/renderer/core/layout/layout_result.h"
 #include "third_party/blink/renderer/core/style/computed_style_base_constants.h"
 
 namespace blink {
@@ -198,10 +198,10 @@ class CORE_EXPORT LineInfo {
   bool NeedsAccurateEndPosition() const { return needs_accurate_end_position_; }
 
   // The block-in-inline layout result.
-  const NGLayoutResult* BlockInInlineLayoutResult() const {
+  const LayoutResult* BlockInInlineLayoutResult() const {
     return block_in_inline_layout_result_;
   }
-  void SetBlockInInlineLayoutResult(const NGLayoutResult* layout_result) {
+  void SetBlockInInlineLayoutResult(const LayoutResult* layout_result) {
     block_in_inline_layout_result_ = std::move(layout_result);
   }
 
@@ -262,7 +262,7 @@ class CORE_EXPORT LineInfo {
   const InlineBreakToken* break_token_ = nullptr;
   HeapVector<Member<const BreakToken>> parallel_flow_break_tokens_;
 
-  const NGLayoutResult* block_in_inline_layout_result_ = nullptr;
+  const LayoutResult* block_in_inline_layout_result_ = nullptr;
 
   absl::optional<LayoutUnit> minimum_space_shortage_;
 

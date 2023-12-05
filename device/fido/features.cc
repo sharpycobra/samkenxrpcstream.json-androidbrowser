@@ -68,11 +68,6 @@ BASE_FEATURE(kWebAuthnHybridLinkWithoutNotifications,
              "WebAuthenticationHybridLinkWithoutNotifications",
              base::FEATURE_DISABLED_BY_DEFAULT);
 
-// Enabled in M116. Remove in or after M119.
-BASE_FEATURE(kWebAuthnNoNullInJSON,
-             "WebAuthenticationNoNullInJSON",
-             base::FEATURE_ENABLED_BY_DEFAULT);
-
 // Enabled in M118. Remove in or after M121.
 BASE_FEATURE(kWebAuthnRequireUpToDateJSONForRemoteDesktop,
              "WebAuthenticationRequireUpToDateJSONForRemoteDesktop",
@@ -191,10 +186,10 @@ BASE_FEATURE(kChromeOsPasskeys,
              base::FEATURE_DISABLED_BY_DEFAULT);
 #endif
 
-// Not yet enabled by default.
+// Enabled in M121. Remove in or after M124.
 BASE_FEATURE(kWebAuthnScreenReaderMode,
              "WebAuthenticationScreenReaderMode",
-             base::FEATURE_DISABLED_BY_DEFAULT);
+             base::FEATURE_ENABLED_BY_DEFAULT);
 
 // Enabled in M120. Remove in or after M123.
 BASE_FEATURE(kWebAuthnAccessibleTimeouts,

@@ -28,6 +28,8 @@ struct Operand {
     kFloat16,
     kInt32,
     kUint32,
+    kInt64,
+    kUint64,
     kInt8,
     kUint8,
     kMaxValue = kUint8,
@@ -63,11 +65,16 @@ static constexpr DataTypeConstraintSet kFloat = {Operand::DataType::kFloat32,
                                                  Operand::DataType::kFloat16};
 
 static constexpr DataTypeConstraintSet kSignedInteger = {
-    Operand::DataType::kInt32, Operand::DataType::kInt8};
+    Operand::DataType::kInt32, Operand::DataType::kInt64,
+    Operand::DataType::kInt8};
 
 static constexpr DataTypeConstraintSet kSignedNumber = {
     Operand::DataType::kFloat32, Operand::DataType::kFloat16,
     Operand::DataType::kInt32, Operand::DataType::kInt8};
+
+static constexpr DataTypeConstraintSet kGatherOperatorIndexDataTypes = {
+    Operand::DataType::kInt32, Operand::DataType::kUint32,
+    Operand::DataType::kInt64, Operand::DataType::kUint64};
 
 }  // namespace DataTypeConstraint
 
@@ -258,6 +265,26 @@ struct GemmAttributes {
   bool b_transpose = false;
 };
 
+// Contains the attributes of layerNormalization operator.
+struct LayerNormalizationAttributes {
+  LayerNormalizationAttributes();
+  ~LayerNormalizationAttributes();
+
+  LayerNormalizationAttributes(LayerNormalizationAttributes&& other);
+  LayerNormalizationAttributes& operator=(LayerNormalizationAttributes&& other);
+
+  LayerNormalizationAttributes(const LayerNormalizationAttributes&) = delete;
+  LayerNormalizationAttributes& operator=(const LayerNormalizationAttributes&) =
+      delete;
+
+  // The scale operand.
+  absl::optional<Operand> scale;
+  // The bias operand.
+  absl::optional<Operand> bias;
+  // The indices to the input dimensions to normalize along.
+  absl::optional<std::vector<uint32_t>> axes;
+};
+
 struct SliceAttributes {
   SliceAttributes();
   ~SliceAttributes();
@@ -350,12 +377,25 @@ base::expected<Operand, std::string> ValidateResample2dAndInferOutput(
         scales_or_sizes,
     base::span<const uint32_t> axes);
 
+// Validate and infer output information of gather operator defined in
+// WebIDL here https://www.w3.org/TR/webnn/#api-mlgraphbuilder-gather
+base::expected<Operand, std::string> ValidateGatherAndInferOutput(
+    const Operand& input,
+    const Operand& indices,
+    const uint32_t axis);
+
 // Validate gemm operator defined in WebIDL here
 // https://www.w3.org/TR/webnn/#api-mlgraphbuilder-gemm
 base::expected<Operand, std::string> ValidateGemmAndInferOutput(
     const Operand& a,
     const Operand& b,
     const GemmAttributes& attributes);
+
+// Validate and infer output information of layerNormalization operator defined
+// in WebIDL here https://www.w3.org/TR/webnn/#api-mlgraphbuilder-layernorm.
+base::expected<Operand, std::string> ValidateLayerNormalizationAndInferOutput(
+    const Operand& input,
+    const LayerNormalizationAttributes& attributes);
 
 // Validate concat operator defined in WebIDL here
 // https://www.w3.org/TR/webnn/#api-mlgraphbuilder-concat
@@ -407,7 +447,7 @@ base::expected<size_t, std::string> ValidateAndCalculateByteLength(
 // Validate that the axes are within the range of [0, rank - 1] without
 // duplication.
 base::expected<void, std::string> ValidateAxes(base::span<const uint32_t> axes,
-                                               uint32_t rank);
+                                               const size_t rank);
 
 // Broadcast the input shapes and return the output shape.
 // If bidirectional is true, its behavior follows the numpy-broadcasting-rule:

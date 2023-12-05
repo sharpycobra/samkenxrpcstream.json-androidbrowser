@@ -24,7 +24,7 @@
 namespace {
 
 // The size of the `Report an issue` button icon.
-const CGFloat kReportAnIssueIconSize = 18;
+const CGFloat kReportAnIssueIconSize = 15;
 
 // The trailing and leading offsets of the `Report an issue` button.
 const CGFloat kReportAnIssueButtonTrailingOffset = 8;
@@ -137,12 +137,14 @@ ios::provider::UnitType TypeByUnit(NSUnit* unit) {
 @implementation UnitConversionViewController
 
 - (instancetype)initWithSourceUnit:(NSUnit*)sourceUnit
+                        targetUnit:(NSUnit*)targetUnit
                          unitValue:(double)unitValue {
   self = [super initWithStyle:UITableViewStyleInsetGrouped];
 
   if (self) {
     _unitValue = unitValue;
     _sourceUnit = sourceUnit;
+    _targetUnit = targetUnit;
     _previousHeight = 0;
   }
   return self;
@@ -177,7 +179,6 @@ ios::provider::UnitType TypeByUnit(NSUnit* unit) {
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  _targetUnit = ios::provider::GetDefaultTargetUnit(_sourceUnit);
   _unitType = TypeByUnit(_sourceUnit);
   _sourceUnitValueField =
       [NSString localizedStringWithFormat:@"%g", _unitValue];
@@ -266,19 +267,18 @@ ios::provider::UnitType TypeByUnit(NSUnit* unit) {
   UIButton* button = [[UIButton alloc] init];
   UIButtonConfiguration* buttonConfiguration =
       [UIButtonConfiguration plainButtonConfiguration];
-  buttonConfiguration.imagePadding = kReportAnIssueButtonPadding;
-  button.configuration = buttonConfiguration;
-  button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
-  [button
-      setTitle:l10n_util::GetNSString(IDS_UNITS_MEASUREMENTS_REPORT_AN_ISSUE)
-      forState:UIControlStateNormal];
-  button.titleLabel.font =
-      [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
   UIImage* reportAnIssueIcon = DefaultSymbolWithPointSize(
       kExclamationMarkBubbleSymbol, kReportAnIssueIconSize);
-  [button setImage:[reportAnIssueIcon
-                       imageWithTintColor:[UIColor colorNamed:kBlueColor]]
-          forState:UIControlStateNormal];
+  [buttonConfiguration setImage:reportAnIssueIcon];
+  buttonConfiguration.imagePadding = kReportAnIssueButtonPadding;
+  buttonConfiguration.attributedTitle = [self
+      createAttributedStringWithTitle:
+          l10n_util::GetNSString(IDS_UNITS_MEASUREMENTS_REPORT_AN_ISSUE)
+                                 font:[UIFont preferredFontForTextStyle:
+                                                  UIFontTextStyleFootnote]];
+  button.configuration = buttonConfiguration;
+  button.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+  [button setTintColor:[UIColor colorNamed:kBlueColor]];
   [button addTarget:self
                 action:@selector(reportIssueButtonTapped:)
       forControlEvents:UIControlEventTouchUpInside];

@@ -154,6 +154,8 @@ component("x") {
   output_name = "gfx_x11"
 
   sources = [
+    "atom_cache.cc",
+    "atom_cache.h",
     "connection.cc",
     "connection.h",
     "error.cc",
@@ -163,6 +165,8 @@ component("x") {
     "event_observer.h",
     "future.cc",
     "future.h",
+    "geometry_cache.cc",
+    "geometry_cache.h",
     "keyboard_state.cc",
     "keyboard_state.h",
     "property_cache.cc",
@@ -177,8 +181,8 @@ component("x") {
     "window_cache.h",
     "window_event_manager.cc",
     "window_event_manager.h",
-    "x11_atom_cache.cc",
-    "x11_atom_cache.h",
+    "wm_sync.cc",
+    "wm_sync.h",
     "x11_path.cc",
     "x11_path.h",
     "xlib_support.cc",
@@ -211,8 +215,10 @@ source_set("unit_test") {
   testonly = true
   sources = [
     "connection_unittest.cc",
+    "geometry_cache_unittest.cc",
     "property_cache_unittest.cc",
     "window_cache_unittest.cc",
+    "wm_sync_unittest.cc",
   ]
   deps = [
     "//base",

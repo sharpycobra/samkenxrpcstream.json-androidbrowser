@@ -12,7 +12,7 @@
 #include "third_party/blink/renderer/core/html/html_br_element.h"
 #include "third_party/blink/renderer/core/layout/inline/fragment_item.h"
 #include "third_party/blink/renderer/core/layout/inline/inline_cursor.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_physical_box_fragment.h"
+#include "third_party/blink/renderer/core/layout/physical_box_fragment.h"
 #include "third_party/blink/renderer/core/testing/core_unit_test_helper.h"
 
 namespace blink {
@@ -39,7 +39,7 @@ class LayoutTextCombineTest : public RenderingTest {
   }
 
   static PhysicalRect ContentsInkOverflow(const FragmentItem& item) {
-    if (const NGPhysicalBoxFragment* box_fragment = item.BoxFragment()) {
+    if (const PhysicalBoxFragment* box_fragment = item.BoxFragment()) {
       return box_fragment->ContentsInkOverflowRect();
     }
     if (!item.HasInkOverflow()) {
@@ -718,14 +718,14 @@ TEST_F(LayoutTextCombineTest, Outline) {
   const auto& sample1 = *GetLayoutObjectByElementId("t1");
   VectorOutlineRectCollector collector;
   sample1.AddOutlineRects(collector, nullptr, PhysicalOffset(),
-                          NGOutlineType::kDontIncludeBlockVisualOverflow);
+                          OutlineType::kDontIncludeBlockInkOverflow);
   Vector<PhysicalRect> standard_outlines1 = collector.TakeRects();
   EXPECT_THAT(
       standard_outlines1,
       ElementsAre(PhysicalRect(PhysicalOffset(0, 0), PhysicalSize(150, 200))));
 
   sample1.AddOutlineRects(collector, nullptr, PhysicalOffset(),
-                          NGOutlineType::kIncludeBlockVisualOverflow);
+                          OutlineType::kIncludeBlockInkOverflow);
   Vector<PhysicalRect> focus_outlines1 = collector.TakeRects();
   EXPECT_THAT(
       focus_outlines1,
@@ -741,14 +741,14 @@ TEST_F(LayoutTextCombineTest, Outline) {
   // Sample 1 without text-combine-upright:all
   const auto& sample2 = *GetLayoutObjectByElementId("t2");
   sample2.AddOutlineRects(collector, nullptr, PhysicalOffset(),
-                          NGOutlineType::kDontIncludeBlockVisualOverflow);
+                          OutlineType::kDontIncludeBlockInkOverflow);
   Vector<PhysicalRect> standard_outlines2 = collector.TakeRects();
   EXPECT_THAT(
       standard_outlines2,
       ElementsAre(PhysicalRect(PhysicalOffset(0, 0), PhysicalSize(150, 100))));
 
   sample1.AddOutlineRects(collector, nullptr, PhysicalOffset(),
-                          NGOutlineType::kIncludeBlockVisualOverflow);
+                          OutlineType::kIncludeBlockInkOverflow);
   Vector<PhysicalRect> focus_outlines2 = collector.TakeRects();
   EXPECT_THAT(
       focus_outlines2,

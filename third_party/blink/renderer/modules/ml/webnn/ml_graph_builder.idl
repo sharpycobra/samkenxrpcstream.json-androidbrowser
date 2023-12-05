@@ -52,12 +52,23 @@ dictionary MLConvTranspose2dOptions {
   MLActivation activation;
 };
 
+dictionary MLGatherOptions {
+  [EnforceRange] unsigned long axis = 0;
+};
+
 dictionary MLGemmOptions {
   MLOperand c;
   float alpha = 1.0;
   float beta = 1.0;
   boolean aTranspose = false;
   boolean bTranspose = false;
+};
+
+dictionary MLLayerNormalizationOptions {
+  MLOperand scale;
+  MLOperand bias;
+  sequence<[EnforceRange] unsigned long> axes;
+  float epsilon = 1e-5;
 };
 
 dictionary MLLeakyReluOptions {
@@ -168,10 +179,14 @@ dictionary MLSplitOptions {
   [RaisesException] MLOperand reciprocal(MLOperand x);
   [RaisesException] MLOperand sqrt(MLOperand x);
 
+  [RaisesException] MLOperand cast(MLOperand input, MLOperandDataType outputDataType);
+
   [RaisesException] MLOperand elu(MLOperand x, optional MLEluOptions options = {});
   [RaisesException] MLActivation elu(optional MLEluOptions options = {});
 
   [RaisesException] MLOperand expand(MLOperand input, sequence<[EnforceRange] unsigned long> newShape);
+
+  [RaisesException] MLOperand gather(MLOperand input, MLOperand indices, optional MLGatherOptions options = {});
 
   [RaisesException] MLOperand gemm(MLOperand a, MLOperand b, optional MLGemmOptions options = {});
 
@@ -179,6 +194,8 @@ dictionary MLSplitOptions {
   [RaisesException] MLActivation hardSwish();
 
   [RaisesException] MLOperand matmul(MLOperand a, MLOperand b);
+
+  [RaisesException] MLOperand layerNormalization(MLOperand input, optional MLLayerNormalizationOptions options = {});
 
   [RaisesException] MLOperand leakyRelu(MLOperand x, optional MLLeakyReluOptions options = {});
   [RaisesException] MLActivation leakyRelu(optional MLLeakyReluOptions options = {});
@@ -206,7 +223,7 @@ dictionary MLSplitOptions {
   [RaisesException] MLOperand relu(MLOperand input);
   [RaisesException] MLActivation relu();
 
-  [RaisesException] MLOperand reshape(MLOperand input, sequence<[EnforceRange] unsigned long?> newShape);
+  [RaisesException] MLOperand reshape(MLOperand input, sequence<[EnforceRange] unsigned long> newShape);
 
   [RaisesException] MLOperand resample2d(MLOperand input, optional MLResample2dOptions options = {});
 
@@ -216,6 +233,7 @@ dictionary MLSplitOptions {
   [RaisesException] MLOperand slice(MLOperand input, sequence<[EnforceRange] unsigned long> starts, sequence<[EnforceRange] unsigned long> sizes);
 
   [RaisesException] MLOperand softmax(MLOperand input);
+  [RaisesException] MLActivation softmax();
 
   [RaisesException] MLOperand softsign(MLOperand input);
   [RaisesException] MLActivation softsign();
@@ -229,7 +247,7 @@ dictionary MLSplitOptions {
   [RaisesException] MLOperand transpose(
       MLOperand input, optional MLTransposeOptions options = {});
 
-  [RaisesException] MLOperand where(MLOperand condition, MLOperand input, MLOperand other);
+  [RaisesException] MLOperand where(MLOperand condition, MLOperand true_value, MLOperand false_value);
 
   [
     CallWith=ScriptState,

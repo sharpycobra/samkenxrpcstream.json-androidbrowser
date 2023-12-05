@@ -9,14 +9,14 @@
 #include "third_party/blink/renderer/bindings/core/v8/v8_intrinsic_sizes_result_options.h"
 #include "third_party/blink/renderer/core/dom/document.h"
 #include "third_party/blink/renderer/core/frame/local_dom_window.h"
-#include "third_party/blink/renderer/core/layout/geometry/logical_size.h"
+#include "third_party/blink/renderer/core/layout/block_layout_algorithm.h"
 #include "third_party/blink/renderer/core/layout/custom/custom_layout_fragment.h"
 #include "third_party/blink/renderer/core/layout/custom/custom_layout_scope.h"
 #include "third_party/blink/renderer/core/layout/custom/layout_worklet.h"
 #include "third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_block_layout_algorithm.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_length_utils.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_out_of_flow_layout_part.h"
+#include "third_party/blink/renderer/core/layout/geometry/logical_size.h"
+#include "third_party/blink/renderer/core/layout/length_utils.h"
+#include "third_party/blink/renderer/core/layout/out_of_flow_layout_part.h"
 #include "third_party/blink/renderer/platform/bindings/script_forbidden_scope.h"
 
 namespace blink {
@@ -78,7 +78,7 @@ MinMaxSizesResult CustomLayoutAlgorithm::ComputeMinMaxSizes(
   return MinMaxSizesResult(sizes, depends_on_block_constraints);
 }
 
-const NGLayoutResult* CustomLayoutAlgorithm::Layout() {
+const LayoutResult* CustomLayoutAlgorithm::Layout() {
   DCHECK(!IsBreakInside(GetBreakToken()));
 
   if (!Node().IsCustomLayoutLoaded())
@@ -206,7 +206,7 @@ MinMaxSizesResult CustomLayoutAlgorithm::FallbackMinMaxSizes(
   return BlockLayoutAlgorithm(params_).ComputeMinMaxSizes(input);
 }
 
-const NGLayoutResult* CustomLayoutAlgorithm::FallbackLayout() {
+const LayoutResult* CustomLayoutAlgorithm::FallbackLayout() {
   return BlockLayoutAlgorithm(params_).Layout();
 }
 

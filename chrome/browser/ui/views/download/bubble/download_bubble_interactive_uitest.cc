@@ -19,7 +19,6 @@
 #include "chrome/test/interaction/interactive_browser_test.h"
 #include "components/feature_engagement/public/feature_constants.h"
 #include "components/feature_engagement/test/scoped_iph_feature_list.h"
-#include "components/safe_browsing/core/common/features.h"
 #include "components/user_education/test/feature_promo_test_util.h"
 #include "content/public/test/browser_test.h"
 #include "testing/gtest/include/gtest/gtest.h"
@@ -62,12 +61,10 @@ class DownloadBubbleInteractiveUiTest : public DownloadTestBase,
  public:
   DownloadBubbleInteractiveUiTest() {
     test_features_.InitAndEnableFeatures(
-        {
-          feature_engagement::kIPHDownloadToolbarButtonFeature,
-              safe_browsing::kDownloadBubble, safe_browsing::kDownloadBubbleV2
+        {feature_engagement::kIPHDownloadToolbarButtonFeature
 #if BUILDFLAG(IS_MAC)
-              ,
-              features::kImmersiveFullscreen
+         ,
+         features::kImmersiveFullscreen
 #endif  // BUILDFLAG(IS_MAC)
         },
         {});

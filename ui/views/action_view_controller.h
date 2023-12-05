@@ -15,37 +15,30 @@
 #include "ui/views/view_tracker.h"
 #include "ui/views/views_export.h"
 
+/////////////////////////////////////////////////////////////////////////////
+// To allow ActionViewController to support a new view class, implement an
+// ActionViewInterface class for the view class. See action_view_interface.h.
+// ui/views/controls/button/button.* has a concrete example.
 namespace views {
 
 class View;
 
-// Base action view controller that provides the interface for a standard action
-// view controller.
+// ActionViewControllerBase provides a base class for the templated
+// ActionViewControllerTemplate.
 class VIEWS_EXPORT ActionViewControllerBase {
  public:
   ActionViewControllerBase() = default;
   ActionViewControllerBase(const ActionViewControllerBase&) = delete;
   ActionViewControllerBase& operator=(const ActionViewControllerBase&) = delete;
   virtual ~ActionViewControllerBase() = default;
-  void ActionItemChanged() {}
-  void ActionItemChangedInterim(View* view, actions::ActionItem* action_item) {}
-  void SetActionView(View* action_view) {}
-  void SetActionItem(base::WeakPtr<actions::ActionItem> action_item) {}
-};
-
-template <typename ViewT>
-struct VIEWS_EXPORT ActionViewControllerSuperClassT {
-  using SuperClass = ActionViewControllerBase;
 };
 
 // ActionViewControllerTemplate is the templated core functionality that manages
 // the relationship between the action item and the view. The template allows
 // the action view controller to be generalized to any view class.
-template <typename ViewT,
-          typename SuperClassViewControllerT =
-              typename ActionViewControllerSuperClassT<ViewT>::SuperClass>
+template <typename ViewT>
 class VIEWS_EXPORT ActionViewControllerTemplate
-    : public SuperClassViewControllerT {
+    : public ActionViewControllerBase {
  public:
   ActionViewControllerTemplate() = default;
   ActionViewControllerTemplate(ViewT* view,
@@ -65,12 +58,7 @@ class VIEWS_EXPORT ActionViewControllerTemplate
     if (!action_view || !action_item) {
       return;
     }
-    ActionItemChangedInterim(action_view, action_item);
-  }
-
-  void ActionItemChangedInterim(ViewT* view, actions::ActionItem* action_item) {
-    SuperClassViewControllerT::ActionItemChangedInterim(view, action_item);
-    ActionItemChangedImpl(view, action_item);
+    action_view->GetActionViewInterface()->ActionItemChangedImpl(action_item);
   }
 
   void SetActionItem(base::WeakPtr<actions::ActionItem> action_item) {
@@ -80,9 +68,6 @@ class VIEWS_EXPORT ActionViewControllerTemplate
     action_item_ = action_item;
     action_changed_subscription_ = {};
     LinkActionItemAndView();
-    // Calling this method up to the super classes allows the action item to be
-    // accessible at each super class level of the template.
-    SuperClassViewControllerT::SetActionItem(action_item);
   }
 
   void LinkActionItemAndView() {
@@ -93,8 +78,7 @@ class VIEWS_EXPORT ActionViewControllerTemplate
     }
     action_changed_subscription_ =
         action_item->AddActionChangedCallback(base::BindRepeating(
-            &ActionViewControllerTemplate<
-                ViewT, SuperClassViewControllerT>::ActionItemChanged,
+            &ActionViewControllerTemplate<ViewT>::ActionItemChanged,
             base::Unretained(this)));
     ActionItemChanged();
     action_view->InvalidateLayout();
@@ -117,30 +101,26 @@ class VIEWS_EXPORT ActionViewControllerTemplate
       return;
     }
     action_view_tracker_.SetView(action_view);
-    // Calling this method up to the super classes allows the view to be
-    // accessible at each super class level of the template as well as get the
-    // specific behaviors set on the view of the super classes.
-    SuperClassViewControllerT::SetActionView(action_view);
-    SetActionViewImpl(action_view);
+    // base::Unretained is okay because by view controller patterns, view
+    // controllers must outlive the views they manage.
+    action_view->GetActionViewInterface()->LinkActionTriggerToView(
+        base::BindRepeating(&ActionViewControllerTemplate::TriggerAction,
+                            base::Unretained(this)));
     LinkActionItemAndView();
   }
 
-  actions::ActionItem* GetActionItemForTesting() { return GetActionItem(); }
+  actions::ActionItem* GetActionItem() { return action_item_.get(); }
 
  private:
-  actions::ActionItem* GetActionItem() { return action_item_.get(); }
-  void SetActionViewImpl(ViewT* action_view) {}
-  void ActionItemChangedImpl(ViewT* action_view,
-                             actions::ActionItem* action_item);
-
   views::ViewTracker action_view_tracker_;
   base::WeakPtr<actions::ActionItem> action_item_ = nullptr;
   base::CallbackListSubscription action_changed_subscription_;
 };
 
 // ActionViewController is the main view controller to be instantiated or
-// subclassed. Under the hood it creates the appropriate templated
-// ActionViewControllerTemplate for all classes of views.
+// subclassed. It should outlive all the views it manages. Under the hood it
+// creates the appropriate templated ActionViewControllerTemplate for all
+// classes of views.
 class VIEWS_EXPORT ActionViewController {
  public:
   ActionViewController();

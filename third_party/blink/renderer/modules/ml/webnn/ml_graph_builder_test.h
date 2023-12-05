@@ -11,7 +11,9 @@
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_conv_2d_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_conv_transpose_2d_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_elu_options.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_ml_gather_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_gemm_options.h"
+#include "third_party/blink/renderer/bindings/modules/v8/v8_ml_layer_normalization_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_leaky_relu_options.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_operand_data_type.h"
 #include "third_party/blink/renderer/bindings/modules/v8/v8_ml_pad_options.h"
@@ -61,6 +63,13 @@ MLOperand* BuildConvTranspose2d(V8TestingScope& scope,
                                 const MLOperand* filter,
                                 const MLConvTranspose2dOptions* options =
                                     MLConvTranspose2dOptions::Create());
+
+MLOperand* BuildGather(
+    V8TestingScope& scope,
+    MLGraphBuilder* builder,
+    const MLOperand* input,
+    const MLOperand* indices,
+    const MLGatherOptions* options = MLGatherOptions::Create());
 
 MLOperand* BuildLeakyRelu(
     V8TestingScope& scope,
@@ -114,6 +123,12 @@ MLOperand* BuildGemm(V8TestingScope& scope,
                      const MLOperand* a,
                      const MLOperand* b,
                      const MLGemmOptions* options = MLGemmOptions::Create());
+
+MLOperand* BuildLayerNormalization(V8TestingScope& scope,
+                                   MLGraphBuilder* builder,
+                                   const MLOperand* input,
+                                   const MLLayerNormalizationOptions* options =
+                                       MLLayerNormalizationOptions::Create());
 
 enum class ReduceKind {
   kL1,

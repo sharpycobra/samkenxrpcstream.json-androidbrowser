@@ -21,7 +21,6 @@
 #include "ash/shelf/shelf.h"
 #include "ash/shell.h"
 #include "ash/shell_delegate.h"
-#include "ash/wm/bounds_tracker/window_bounds_tracker.h"
 #include "ash/wm/float/float_controller.h"
 #include "ash/wm/mru_window_tracker.h"
 #include "ash/wm/overview/overview_controller.h"
@@ -32,7 +31,6 @@
 #include "ash/wm/snap_group/snap_group_controller.h"
 #include "ash/wm/splitview/split_view_controller.h"
 #include "ash/wm/splitview/split_view_overview_session.h"
-#include "ash/wm/tablet_mode/tablet_mode_controller.h"
 #include "ash/wm/window_positioning_utils.h"
 #include "ash/wm/window_state.h"
 #include "ash/wm/wm_event.h"
@@ -274,16 +272,7 @@ bool MoveWindowToDisplay(aura::Window* window, int64_t display_id) {
     window_state->SetRestoreBoundsInScreen(restore_bounds);
   }
 
-  auto* window_bounds_tracker = Shell::Get()->window_bounds_tracker();
-  gfx::Rect remapped_bounds;
-  if (window_bounds_tracker) {
-    remapped_bounds = window_bounds_tracker->RemapOrRestore(window, display_id);
-  }
-
   container->AddChild(window);
-  if (window_bounds_tracker) {
-    window->SetBounds(remapped_bounds);
-  }
   return true;
 }
 
@@ -379,7 +368,7 @@ bool ShouldExcludeForOverview(const aura::Window* window) {
     return true;
   }
 
-  return Shell::Get()->tablet_mode_controller()->InTabletMode()
+  return display::Screen::GetScreen()->InTabletMode()
              ? (window == split_view_controller->GetDefaultSnappedWindow())
              : should_exclude_in_clamshell();
 }
@@ -511,15 +500,18 @@ aura::Window* GetFloatedWindowForActiveDesk() {
 bool ShouldMinimizeTopWindowOnBack() {
   Shell* shell = Shell::Get();
   // We never want to minimize the main app window in the Kiosk session.
-  if (shell->session_controller()->IsRunningInAppMode())
+  if (shell->session_controller()->IsRunningInAppMode()) {
     return false;
+  }
 
-  if (!shell->tablet_mode_controller()->InTabletMode())
+  if (!display::Screen::GetScreen()->InTabletMode()) {
     return false;
+  }
 
   aura::Window* window = GetTopWindow();
-  if (!window)
+  if (!window) {
     return false;
+  }
 
   // Do not minimize the window if it is in overview. This can avoid unnecessary
   // window minimize animation.

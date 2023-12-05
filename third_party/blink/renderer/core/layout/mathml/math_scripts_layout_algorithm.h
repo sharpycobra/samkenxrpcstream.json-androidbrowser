@@ -6,8 +6,8 @@
 #define THIRD_PARTY_BLINK_RENDERER_CORE_LAYOUT_MATHML_MATH_SCRIPTS_LAYOUT_ALGORITHM_H_
 
 #include "third_party/blink/renderer/core/core_export.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_box_fragment_builder.h"
-#include "third_party/blink/renderer/core/layout/ng/ng_layout_algorithm.h"
+#include "third_party/blink/renderer/core/layout/box_fragment_builder.h"
+#include "third_party/blink/renderer/core/layout/layout_algorithm.h"
 #include "third_party/blink/renderer/core/mathml/mathml_scripts_element.h"
 
 namespace blink {
@@ -24,7 +24,7 @@ class CORE_EXPORT MathScriptsLayoutAlgorithm
     DISALLOW_NEW();
 
    public:
-    Member<const NGLayoutResult> result;
+    Member<const LayoutResult> result;
     LayoutUnit ascent;
     LayoutUnit descent;
     LayoutUnit inline_size;
@@ -79,7 +79,7 @@ class CORE_EXPORT MathScriptsLayoutAlgorithm
       const ChildrenAndMetrics& sub_metrics,
       const ChildrenAndMetrics& sup_metrics) const;
 
-  const NGLayoutResult* Layout() final;
+  const LayoutResult* Layout() final;
 };
 
 }  // namespace blink

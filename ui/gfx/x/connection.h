@@ -11,6 +11,7 @@
 #include "base/functional/callback.h"
 #include "base/memory/raw_ptr.h"
 #include "base/observer_list.h"
+#include "base/scoped_observation_traits.h"
 #include "base/sequence_checker.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
 #include "ui/events/platform/platform_event_source.h"
@@ -26,8 +27,10 @@ typedef struct xcb_connection_t xcb_connection_t;
 
 namespace x11 {
 
+class AtomCache;
 class Event;
 class KeyboardState;
+class PropertyCache;
 class VisualManager;
 class WriteBuffer;
 
@@ -424,6 +427,13 @@ class COMPONENT_EXPORT(X11) Connection final : public XProto,
 
   ScopedEventSelector ScopedSelectEvent(Window window, EventMask event_mask);
 
+  Atom GetAtom(const char* name) const;
+
+  // Returns an empty string if there is no window manager or the WM is unnamed.
+  std::string GetWmName() const;
+
+  bool WmSupportsHint(Atom atom) const;
+
   // The viz compositor thread hangs a PlatformEventSource off the connection so
   // that it gets destroyed at the appropriate time.
   // TODO(thomasanderson): This is a layering violation and this should be moved
@@ -497,6 +507,10 @@ class COMPONENT_EXPORT(X11) Connection final : public XProto,
 
   uint32_t GenerateIdImpl();
 
+  void OnRootPropertyChanged(Atom property, const GetPropertyResponse& value);
+
+  bool WmSupportsEwmh() const;
+
   std::string display_string_;
   int default_screen_id_ = 0;
   std::unique_ptr<xcb_connection_t, void (*)(xcb_connection_t*)> connection_ = {
@@ -550,8 +564,29 @@ class COMPONENT_EXPORT(X11) Connection final : public XProto,
 
   // Must be after `sequence_checker_`.
   std::unique_ptr<VisualManager> visual_manager_;
+
+  std::unique_ptr<AtomCache> atom_cache_;
+
+  std::unique_ptr<PropertyCache> root_props_;
+  std::unique_ptr<PropertyCache> wm_props_;
 };
 
 }  // namespace x11
+
+namespace base {
+
+template <>
+struct ScopedObservationTraits<x11::Connection, x11::EventObserver> {
+  static void AddObserver(x11::Connection* connection,
+                          x11::EventObserver* observer) {
+    connection->AddEventObserver(observer);
+  }
+  static void RemoveObserver(x11::Connection* connection,
+                             x11::EventObserver* observer) {
+    connection->RemoveEventObserver(observer);
+  }
+};
+
+}  // namespace base
 
 #endif  // UI_GFX_X_CONNECTION_H_

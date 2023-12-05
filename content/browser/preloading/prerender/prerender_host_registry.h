@@ -39,6 +39,10 @@ namespace memory_instrumentation {
 class GlobalMemoryDump;
 }
 
+namespace net {
+class HttpResponseHeaders;
+}
+
 namespace network {
 class SimpleURLLoader;
 }  // namespace network
@@ -207,8 +211,6 @@ class CONTENT_EXPORT PrerenderHostRegistry : public WebContentsObserver {
 
   // Returns the non-reserved host for `prerendering_url`. Returns nullptr if
   // the URL doesn't match any non-reserved host.
-  // Note that the result of this function includes prerender-into-new-tab
-  // triggers.
   PrerenderHost* FindHostByUrlForTesting(const GURL& prerendering_url);
 
   // Cancels all hosts.
@@ -257,6 +259,11 @@ class CONTENT_EXPORT PrerenderHostRegistry : public WebContentsObserver {
   void OnVisibilityChanged(Visibility visibility) override;
   void PrimaryMainFrameRenderProcessGone(
       base::TerminationStatus status) override;
+
+  bool CancelHostInternal(int frame_tree_node_id,
+                          const PrerenderCancellationReason& reason);
+  bool CancelNewTabHostInternal(int frame_tree_node_id,
+                                const PrerenderCancellationReason& reason);
 
   int FindHostToActivateInternal(NavigationRequest& navigation_request);
 

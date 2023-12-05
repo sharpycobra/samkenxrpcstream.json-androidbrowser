@@ -13,6 +13,7 @@
 #include "chrome/browser/apps/app_service/app_service_proxy_ash.h"
 #include "chrome/browser/ash/file_manager/app_id.h"
 #include "chrome/browser/ash/file_manager/file_tasks.h"
+#include "chrome/browser/ash/file_manager/fileapi_util.h"
 #include "chrome/browser/ash/file_manager/path_util.h"
 #include "chrome/browser/ash/file_manager/volume_manager_observer.h"
 #include "chrome/browser/ash/file_system_provider/fake_extension_provider.h"
@@ -100,6 +101,35 @@ void FolderInMyFiles::Refresh() {
             });
 }
 
+std::vector<storage::FileSystemURL> CopyTestFilesIntoMyFiles(
+    Profile* profile,
+    std::vector<std::string> file_names) {
+  FolderInMyFiles folder(profile);
+  base::FilePath test_data_path;
+  EXPECT_TRUE(base::PathService::Get(chrome::DIR_TEST_DATA, &test_data_path));
+
+  for (const auto& file_name : file_names) {
+    base::FilePath file_path =
+        test_data_path.AppendASCII("chromeos/file_manager/" + file_name);
+    {
+      base::ScopedAllowBlockingForTesting allow_blocking;
+      EXPECT_TRUE(base::PathExists(file_path));
+    }
+    // Copy the file into My Files.
+    folder.Add({file_path});
+  }
+
+  std::vector<storage::FileSystemURL> files;
+  for (const auto& path_in_my_files : folder.files()) {
+    GURL url;
+    CHECK(util::ConvertAbsoluteFilePathToFileSystemUrl(
+        profile, path_in_my_files, util::GetFileManagerURL(), &url));
+    auto* file_system_context = util::GetFileManagerFileSystemContext(profile);
+    files.push_back(file_system_context->CrackURLInFirstPartyContext(url));
+  }
+  return files;
+}
+
 void AddDefaultComponentExtensionsOnMainThread(Profile* profile) {
   CHECK(profile);
 
@@ -158,6 +188,15 @@ scoped_refptr<const extensions::Extension> InstallTestingChromeApp(
 
 base::WeakPtr<file_manager::Volume> InstallFileSystemProviderChromeApp(
     Profile* profile) {
+  return InstallFileSystemProviderChromeApp(
+      profile, base::BindOnce(&InstallTestingChromeApp, profile)
+                   .Then(base::BindOnce(
+                       [](scoped_refptr<const extensions::Extension>) {})));
+}
+
+base::WeakPtr<file_manager::Volume> InstallFileSystemProviderChromeApp(
+    Profile* profile,
+    base::OnceCallback<void(const char*)> install_fn) {
   static constexpr char kFileSystemProviderFilesystemId[] =
       "test-image-provider-fs";
   base::RunLoop run_loop;
@@ -170,8 +209,7 @@ base::WeakPtr<file_manager::Volume> InstallFileSystemProviderChromeApp(
 
   file_manager::test::VolumeWaiter waiter(profile_with_volume_manager_events,
                                           run_loop.QuitClosure());
-  auto extension = InstallTestingChromeApp(
-      profile, "extensions/api_test/file_browser/image_provider");
+  std::move(install_fn).Run("extensions/api_test/file_browser/image_provider");
   run_loop.Run();
 
   auto* volume_manager =

@@ -52,6 +52,7 @@
 #include "ash/touch/touch_observer_hud.h"
 #include "ash/wallpaper/views/wallpaper_widget_controller.h"
 #include "ash/wm/always_on_top_controller.h"
+#include "ash/wm/bounds_tracker/window_bounds_tracker.h"
 #include "ash/wm/container_finder.h"
 #include "ash/wm/desks/desks_controller.h"
 #include "ash/wm/desks/desks_util.h"
@@ -201,8 +202,12 @@ void ReparentWindow(aura::Window* window, aura::Window* new_parent) {
   gfx::Rect restore_bounds;
   const bool has_restore_bounds = state && state->HasRestoreBounds();
 
+  auto* window_bounds_tracker = Shell::Get()->window_bounds_tracker();
+  // `WindowBoundsTracker` will handle the window's bounds on root window
+  // changes if the feature `kWindowBoundsTracker` is enabled.
   const bool update_bounds =
-      state && (state->IsNormalStateType() || state->IsMinimized());
+      state && (state->IsNormalStateType() || state->IsMinimized()) &&
+      !window_bounds_tracker;
   gfx::Rect work_area_in_new_parent =
       screen_util::GetDisplayWorkAreaBoundsInParent(new_parent);
 
@@ -217,6 +222,10 @@ void ReparentWindow(aura::Window* window, aura::Window* new_parent) {
     restore_bounds = state->GetRestoreBoundsInParent();
     MoveOriginRelativeToSize(src_size, dst_size, &restore_bounds);
     restore_bounds.AdjustToFit(work_area_in_new_parent);
+  }
+
+  if (window_bounds_tracker) {
+    window_bounds_tracker->AddWindowDisplayIdOnDisplayRemoval(window);
   }
 
   new_parent->AddChild(window);
@@ -505,7 +514,7 @@ std::vector<RootWindowController*>*
     RootWindowController::root_window_controllers_ = nullptr;
 
 RootWindowController::~RootWindowController() {
-  Shutdown();
+  Shutdown(/*destination_root=*/nullptr);
   DCHECK(!wallpaper_widget_controller_.get());
   work_area_insets_.reset();
   ash_host_.reset();
@@ -682,8 +691,12 @@ ScreenRotationAnimator* RootWindowController::GetScreenRotationAnimator() {
   return screen_rotation_animator_.get();
 }
 
-void RootWindowController::Shutdown() {
+void RootWindowController::Shutdown(aura::Window* destination_root) {
   is_shutting_down_ = true;
+
+  if (destination_root) {
+    MoveWindowsTo(destination_root);
+  }
 
   // Destroy the `screen_rotation_animator_` now to avoid any potential crashes
   // if there's any ongoing animation. See http://b/293667233.
@@ -796,23 +809,6 @@ void RootWindowController::CloseChildWindows() {
   shelf_->DestroyShelfWidget();
 
   ::wm::SetTooltipClient(GetRootWindow(), nullptr);
-}
-
-void RootWindowController::MoveWindowsTo(aura::Window* dst) {
-  // Suspend unnecessary updates of the shelf visibility indefinitely since it
-  // is going away.
-  if (GetShelfLayoutManager()) {
-    GetShelfLayoutManager()->SuspendVisibilityUpdateForShutdown();
-  }
-
-  // Clear the workspace controller to avoid a lot of unnecessary operations
-  // when window are removed.
-  // TODO(afakhry): Should we also clear the WorkspaceLayoutManagers of the pip,
-  // always-on-top, and other containers?
-  aura::Window* root = GetRootWindow();
-  ClearWorkspaceControllers(root);
-
-  ReparentAllWindows(root, dst);
 }
 
 void RootWindowController::InitTouchHuds() {
@@ -995,8 +991,8 @@ RootWindowController::security_curtain_widget_controller() {
 
 void RootWindowController::StartSplitViewOverviewSession(
     aura::Window* window,
-    absl::optional<OverviewStartAction> action,
-    absl::optional<OverviewEnterExitType> type,
+    std::optional<OverviewStartAction> action,
+    std::optional<OverviewEnterExitType> type,
     WindowSnapActionSource snap_action_source) {
   if (split_view_overview_session_ ||
       !OverviewController::Get()->CanEnterOverview()) {
@@ -1048,6 +1044,23 @@ RootWindowController::RootWindowController(AshWindowTreeHost* ash_host)
   window_parenting_controller_ =
       std::make_unique<WindowParentingController>(root_window);
   capture_client_ = std::make_unique<::wm::ScopedCaptureClient>(root_window);
+}
+
+void RootWindowController::MoveWindowsTo(aura::Window* dst) {
+  // Suspend unnecessary updates of the shelf visibility indefinitely since it
+  // is going away.
+  if (GetShelfLayoutManager()) {
+    GetShelfLayoutManager()->SuspendVisibilityUpdateForShutdown();
+  }
+
+  // Clear the workspace controller to avoid a lot of unnecessary operations
+  // when window are removed.
+  // TODO(afakhry): Should we also clear the WorkspaceLayoutManagers of the pip,
+  // always-on-top, and other containers?
+  aura::Window* root = GetRootWindow();
+  ClearWorkspaceControllers(root);
+
+  ReparentAllWindows(root, dst);
 }
 
 void RootWindowController::Init(RootWindowType root_window_type) {

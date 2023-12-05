@@ -444,7 +444,7 @@ bool CanCreateNewIncognitoWindow() {
   // Guest mode does not use incognito windows. The browser may have other
   // restrictions on incognito mode (e.g. enterprise policy) but those are rare.
   // For non-guest mode, consume the key and defer the decision to the browser.
-  absl::optional<user_manager::UserType> user_type =
+  std::optional<user_manager::UserType> user_type =
       Shell::Get()->session_controller()->GetUserType();
   return user_type && *user_type != user_manager::USER_TYPE_GUEST;
 }
@@ -1103,9 +1103,9 @@ void ShiftPrimaryDisplay() {
       primary_display_iter->id(), true /* throttle */);
 }
 
-void ShowEmojiPicker() {
+void ShowEmojiPicker(const base::TimeTicks accelerator_timestamp) {
   if (auto* picker_controller = Shell::Get()->picker_controller()) {
-    picker_controller->ToggleWidget();
+    picker_controller->ToggleWidget(accelerator_timestamp);
   } else {
     ui::ShowEmojiPanel();
   }
